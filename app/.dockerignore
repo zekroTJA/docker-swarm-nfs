@@ -1,0 +1,4 @@
+data/
+guestbook
+*.md
+.gitignore

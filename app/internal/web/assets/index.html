@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Guestbook</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <main>
+            <h1>Guestbook</h1>
+            <form id="entry-form">
+                <input
+                    id="name-input"
+                    name="name"
+                    type="text"
+                    placeholder="Your name"
+                    maxlength="80"
+                    required
+                />
+                <textarea
+                    id="message-input"
+                    name="message"
+                    placeholder="Leave a message"
+                    maxlength="500"
+                    rows="3"
+                    required
+                ></textarea>
+                <button type="submit">Sign the guestbook</button>
+                <span id="form-error" class="error" role="alert"></span>
+            </form>
+
+            <ul id="entries"></ul>
+        </main>
+
+        <script src="app.js"></script>
+    </body>
+</html>

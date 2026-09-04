@@ -1,0 +1,35 @@
+# Deploy with:  docker stack deploy -c stack.yml guestbook
+#
+# The guestbook stores entries as files under GUESTBOOK_STORAGE_DIR. For the
+# entries to be consistent across replicas on different swarm nodes, the
+# `data` volume must be backed by shared storage (e.g. the NFS host created by
+# ../setup.sh). Adjust the driver_opts below to match your NFS export.
+
+version: "3.9"
+
+services:
+  guestbook:
+    image: guestbook:latest
+    environment:
+      GUESTBOOK_ADDRESS: ":8080"
+      GUESTBOOK_STORAGE_DIR: "/data"
+      GUESTBOOK_SIMULATOR_ENABLED: "true"
+      GUESTBOOK_SIMULATOR_INTERVAL: "5s"
+    ports:
+      - "8080:8080"
+    volumes:
+      - data:/data
+    deploy:
+      replicas: 2
+      update_config:
+        order: start-first
+      restart_policy:
+        condition: on-failure
+
+volumes:
+  data:
+    # driver: local
+    driver_opts:
+      type: nfs
+      o: "addr=${NFS_ADDRESS},nfsvers=4,rw,soft"
+      device: ":${NFS_SHARE}/guestbook"
