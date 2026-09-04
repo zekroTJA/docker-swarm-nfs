@@ -13,7 +13,7 @@ LIMACTL_LOG="$PWD/limactl.log"
 
 NFS_HOST_NAME=nfs-host
 NFS_HOST_TEMPLATE=template:ubuntu
-SWARM_NODE_TEMPLATE=template:docker
+SWARM_NODE_TEMPLATE=template:docker-rootful
 SWARM_NODE_NAME_PREFIX=swarm-node-
 SWARM_NODES=2
 
@@ -147,5 +147,13 @@ for i in $(seq 2 "$SWARM_NODES"); do
     lima shell "${SWARM_NODE_NAME_PREFIX}${i}" \
         docker swarm join --token "$join_token" "${swarm_master_ip}:${SWARM_JOIN_PORT}"
 done
+
+echo "Deploying demo-guestbook stack on the swarm nodes ..."
+nfs_host_address=$(get_vm_ip "$NFS_HOST_NAME")
+lima shell "$NFS_HOST_NAME" sudo mkdir /media/nfs/guestbook
+lima shell "$NFS_HOST_NAME" sudo chown nobody:nogroup /media/nfs/guestbook
+lima shell "${SWARM_NODE_NAME_PREFIX}1" \
+    env NFS_ADDRESS="${nfs_host_address}" NFS_SHARE=/media/nfs \
+    docker stack deploy -c app/stack.yml guestbook
 
 echo "Finished."
