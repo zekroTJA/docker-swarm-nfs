@@ -17,6 +17,8 @@ SWARM_NODE_TEMPLATE=template:docker
 SWARM_NODE_NAME_PREFIX=swarm-node-
 SWARM_NODES=2
 
+SWARM_JOIN_PORT=2377
+
 create_vm() {
     local name=$1
     local template=$2
@@ -80,7 +82,28 @@ getcmd() {
 limactl=$(getcmd limactl)
 
 lima() {
-    "$limactl" "$@" >>"$LIMACTL_LOG" 2>&1
+    if ! "$limactl" "$@" >>"$LIMACTL_LOG" 2>&1; then
+        echo "error: lima command '$*' failed; see $LIMACTL_LOG for more info" >&2
+        exit 1
+    fi
+}
+
+get_vm_ip() {
+    local name=$1
+
+    local gateway_ip=${NETWORK_GATEWAY%/*}
+    local prefix=${gateway_ip%.*}.
+
+    local ip
+    ip=$("$limactl" shell "$name" ip -4 -o addr show 2>/dev/null |
+        awk -v prefix="$prefix" 'index($4, prefix) == 1 { split($4, a, "/"); print a[1]; exit }')
+
+    if [[ -z "$ip" ]]; then
+        echo "error: could not determine IP of $name on the $NETWORK_NAME network" >&2
+        return 1
+    fi
+
+    echo "$ip"
 }
 
 create_nfs_host() {
@@ -112,5 +135,17 @@ done
 sleep 1
 echo "Waiting for finishing creating VMs ..."
 wait
+
+echo "Initializing first swarm manager on ${SWARM_NODE_NAME_PREFIX}1 ..."
+lima shell "${SWARM_NODE_NAME_PREFIX}1" docker swarm init
+swarm_master_ip=$(get_vm_ip "${SWARM_NODE_NAME_PREFIX}1")
+
+for i in $(seq 2 "$SWARM_NODES"); do
+    echo "Joining swarm on ${SWARM_NODE_NAME_PREFIX}${i} ..."
+    join_token=$("$limactl" shell "${SWARM_NODE_NAME_PREFIX}1" \
+        docker swarm join-token --quiet manager 2>>"$LIMACTL_LOG")
+    lima shell "${SWARM_NODE_NAME_PREFIX}${i}" \
+        docker swarm join --token "$join_token" "${swarm_master_ip}:${SWARM_JOIN_PORT}"
+done
 
 echo "Finished."
