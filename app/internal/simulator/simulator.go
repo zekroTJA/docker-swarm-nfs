@@ -75,7 +75,7 @@ func readLines(name string) (lines []string, err error) {
 	}
 
 	lines = make([]string, 0)
-	for _, line := range strings.Split(string(raw), "\n") {
+	for line := range strings.SplitSeq(string(raw), "\n") {
 		if line = strings.TrimSpace(line); line != "" {
 			lines = append(lines, line)
 		}
