@@ -4,7 +4,7 @@ A self-contained playground for a multi-node **Docker Swarm** cluster running
 entirely in local VMs. [`setup.sh`](./setup.sh) spins up the VMs with
 [Lima](https://lima-vm.io/), forms a Swarm, provisions an NFS server for shared
 volume storage, and deploys a small demo application
-([`app/`](./app), the *Guestbook*) as a Swarm stack.
+([`app/`](./app), the _Guestbook_) as a Swarm stack.
 
 The goal is to have a realistic, throw-away environment to experiment with Swarm
 services, rolling updates, and shared (NFS-backed) volumes without touching a
@@ -12,11 +12,11 @@ cloud provider or the host's Docker daemon.
 
 ## Topology
 
-| VM                | Template               | Role                                              |
-| ----------------- | ---------------------- | ------------------------------------------------- |
-| `nfs-host`        | `template:ubuntu`      | NFS server, exports `/media/nfs` to the cluster.  |
-| `swarm-node-1`    | `template:docker-rootful` | First Swarm manager (runs `docker swarm init`). |
-| `swarm-node-2`    | `template:docker-rootful` | Additional Swarm manager (joins node 1).         |
+| VM             | Template                  | Role                                             |
+| -------------- | ------------------------- | ------------------------------------------------ |
+| `nfs-host`     | `template:ubuntu`         | NFS server, exports `/media/nfs` to the cluster. |
+| `swarm-node-1` | `template:docker-rootful` | First Swarm manager (runs `docker swarm init`).  |
+| `swarm-node-2` | `template:docker-rootful` | Additional Swarm manager (joins node 1).         |
 
 All VMs are attached to a dedicated Lima network `swarm-test`
 (`192.168.69.0/24`, gateway `192.168.69.1`). Each VM is provisioned with 2
@@ -65,7 +65,7 @@ Step by step:
    - Every VM is created with `lima create` (2 CPUs / 2 GB / 16 GB), the repo
      directory mounted via `--mount-only`, and attached to the `swarm-test`
      Lima network, then started with `lima start`.
-   The script waits for all background VM creations to finish.
+     The script waits for all background VM creations to finish.
 4. **Provisions the NFS host.** Inside `nfs-host`:
    - installs `nfs-kernel-server`,
    - creates `/media/nfs`, owned by `nobody:nogroup`,
@@ -75,7 +75,7 @@ Step by step:
 5. **Initializes the Swarm.** Runs `docker swarm init` on `swarm-node-1` and
    determines that VM's IP address on the `swarm-test` network.
 6. **Joins the remaining nodes.** For each further node (`swarm-node-2`), fetches
-   a *manager* join token from `swarm-node-1` and runs `docker swarm join`
+   a _manager_ join token from `swarm-node-1` and runs `docker swarm join`
    against `<swarm-node-1-ip>:2377`. (All nodes join as managers in this demo.)
 7. **Deploys the demo stack.** Determines the NFS host's IP, creates
    `/media/nfs/guestbook` on `nfs-host` (owned by `nobody:nogroup`), then on
@@ -102,7 +102,7 @@ then removes the `swarm-test` Lima network.
 
 ## The demo app
 
-[`app/`](./app) contains *Guestbook*, a small Go web application: visitors sign a
+[`app/`](./app) contains _Guestbook_, a small Go web application: visitors sign a
 guestbook and see all entries on a self-refreshing HTML page. An optional
 activity simulator posts synthetic entries so a running cluster always shows
 traffic. Entries are stored as one JSON file per entry in
@@ -121,8 +121,8 @@ After `./setup.sh` finishes:
    limactl shell swarm-node-1 ip -4 -o addr show
    ```
 
-2. Open `http://<swarm-node-ip>:8080` in a browser. Because the port is
-   published on the Swarm routing mesh, any node's IP works.
+2. Open `http://localhost:8080` in a browser. Because the port is
+   published on the Swarm routing mesh and Lima published exposed ports to the host, this works.
 3. Inspect the running service:
 
    ```sh
@@ -137,3 +137,12 @@ After `./setup.sh` finishes:
      env NFS_ADDRESS=<nfs-host-ip> NFS_SHARE=/media/nfs \
      docker stack deploy -c app/stack.yml guestbook
    ```
+
+## Useful Ressources
+
+Some of the ressources I used to create this setup.
+
+- https://youtu.be/_YsPt7dIvqU
+- https://lima-vm.io/docs/
+- https://linuxconfig.org/how-to-configure-nfs-on-linux
+- https://github.com/massimodipaolo/docker-swarm-nfs
