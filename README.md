@@ -115,22 +115,16 @@ how to run it locally with `go run ./cmd/guestbook`.
 
 After `./setup.sh` finishes:
 
-1. Find a Swarm node's address on the `swarm-test` network, e.g.:
-
-   ```sh
-   limactl shell swarm-node-1 ip -4 -o addr show
-   ```
-
-2. Open `http://localhost:8080` in a browser. Because the port is
+1. Open `http://localhost:8080` in a browser. Because the port is
    published on the Swarm routing mesh and Lima published exposed ports to the host, this works.
-3. Inspect the running service:
+2. Inspect the running service:
 
    ```sh
    limactl shell swarm-node-1 docker service ls
    limactl shell swarm-node-1 docker stack ps guestbook
    ```
 
-4. Redeploy after changing `app/stack.yml`:
+3. Redeploy after changing `app/stack.yml`:
 
    ```sh
    limactl shell swarm-node-1 \
